@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <script>
+    if (location.protocol === "http:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+      location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Комнатные растения — дневник для Android</title>
+  <meta name="description" content="Комнатные растения — уход для Android. На главном экране видно, кого сегодня полить, удобрить и пересадить. Срок полива зависит от горшка и температуры комнаты.">
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,560;7..72,680&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+  html, body { margin: 0; background: #F4EDD8; }
+  #pp {
+    --canvas: #F4EDD8;
+    --paper: #FBF7EA;
+    --ink: #1E1E24;
+    --muted: #5E5A50;
+    --green: #458A6A;
+    --green-dark: #2F6B4F;
+    --sage: #94BA88;
+    --blue: #2A5F80;
+    --mustard: #E0AE33;
+    --salmon: #E59670;
+    --red: #D0504B;
+    --line: rgba(30, 30, 36, 0.85);
+    color: var(--ink);
+    background: var(--canvas);
+    font-family: Manrope, "Segoe UI", sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  #pp *, #pp *::before, #pp *::after { box-sizing: border-box; }
+  #pp h1, #pp h2, #pp h3, #pp p { margin: 0; padding: 0; font-weight: inherit; }
+  #pp a { color: inherit; text-decoration: none; }
+  #pp button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+  #pp img { max-width: 100%; display: block; }
+
+  #pp .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+  #pp .serif { font-family: Literata, Georgia, serif; font-optical-sizing: auto; letter-spacing: -0.03em; }
+
+  #pp .head {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: min(1120px, calc(100% - 40px));
+    margin: 14px auto;
+    padding: 10px 12px 10px 16px;
+    background: rgba(251, 247, 234, 0.92);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+  }
+  #pp .logo { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 800; letter-spacing: -0.03em; }
+  #pp .mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 22%;
+    object-fit: cover;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  #pp .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1.5px solid var(--ink);
+    background: var(--green-dark);
+    color: var(--paper);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  #pp .btn:hover { background: #265840; transform: translateY(-1px); }
+  #pp .btn.light { background: var(--paper); color: var(--ink); }
+  #pp .btn.light:hover { background: #fff; }
+  #pp .btn.small { min-height: 40px; padding: 0 14px; font-size: 14px; flex-shrink: 0; }
+
+  #pp .hero { position: relative; padding: 28px 0 72px; }
+  #pp .shape { position: absolute; pointer-events: none; }
+  #pp .shape.circle-a {
+    width: 280px; height: 280px; border-radius: 50%;
+    background: rgba(224, 174, 51, 0.45);
+    right: -40px; top: 40px;
+  }
+  #pp .shape.circle-b {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(42, 95, 128, 0.28);
+    left: 8%; top: 220px;
+  }
+  #pp .shape.dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(208, 80, 75, 0.85);
+    border: 1.5px solid var(--ink);
+    right: 18%; top: 80px;
+  }
+  #pp .shape.wedge {
+    width: 220px; height: 160px;
+    background: rgba(229, 150, 112, 0.55);
+    clip-path: polygon(0 80%, 100% 0, 100% 100%);
+    right: 6%; bottom: 40px;
+  }
+  #pp .shape.arc {
+    width: 180px; height: 90px;
+    border: 7px solid rgba(42, 95, 128, 0.45);
+    border-bottom: 0;
+    border-radius: 180px 180px 0 0;
+    left: 42%; top: 18px;
+  }
+
+  #pp .hero-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 48px;
+    align-items: center;
+  }
+  #pp .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 6px 12px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  #pp .kicker i {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: block;
+  }
+  #pp h1 {
+    font-size: clamp(40px, 5.4vw, 68px);
+    line-height: 0.98;
+    font-weight: 680;
+    max-width: 12ch;
+  }
+  #pp .lead {
+    margin-top: 20px;
+    max-width: 38ch;
+    color: var(--muted);
+    font-size: 18px;
+  }
+  #pp .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  #pp .fine {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  #pp .phone {
+    justify-self: end;
+    width: min(320px, 100%);
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 32px;
+    padding: 14px 14px 18px;
+    box-shadow: 10px 14px 0 rgba(30, 30, 36, 0.08);
+    position: relative;
+  }
+  #pp .phone::before {
+    content: "";
+    position: absolute;
+    inset: 8px 8px auto;
+    height: 18px;
+  }
+  #pp .status {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px 10px;
+  }
+  #pp .appbar {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 14px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  #pp .search {
+    margin-top: 8px;
+    background: #EFE6CF;
+    border-radius: 12px;
+    padding: 8px 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  #pp .modes { display: flex; gap: 6px; margin: 10px 0; }
+  #pp .modes span {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 0;
+    border-radius: 999px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+  }
+  #pp .modes span.on { background: var(--red); color: var(--paper); }
+  #pp .chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  #pp .chips span {
+    flex: none;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  #pp .chips span.on { background: var(--blue); color: var(--paper); }
+  #pp .plant {
+    display: grid;
+    grid-template-columns: 46px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    margin-top: 8px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 16px;
+  }
+  #pp .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid var(--ink);
+  }
+  #pp .plant b { display: block; font-size: 14px; letter-spacing: -0.02em; }
+  #pp .plant small { color: var(--muted); font-size: 12px; }
+  #pp .plant em {
+    font-style: normal;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  #pp .due {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--ink);
+    background: #F3D27A;
+  }
+  #pp .due.ok { background: #D7E7CF; }
+  #pp .due.wait { background: #D5E3EE; }
+  #pp .today {
+    margin-top: 10px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 16px;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  #pp .hub {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  #pp .tile {
+    min-height: 72px;
+    border-radius: 18px;
+    border: 1.5px solid var(--ink);
+    display: grid;
+    place-items: center;
+    color: var(--paper);
+    font-weight: 800;
+    font-size: 15px;
+  }
+  #pp .tile.green { background: var(--green); }
+  #pp .tile.blue { background: var(--blue); }
+  #pp .cal {
+    margin-top: 8px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 16px;
+    padding: 8px 10px 12px;
+  }
+  #pp .cal b { display: block; text-align: center; font-size: 13px; }
+  #pp .dots {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px 4px;
+    margin-top: 10px;
+    justify-items: center;
+  }
+  #pp .dots i {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #E7DCC0;
+    display: block;
+  }
+  #pp .dots i.w { background: var(--blue); }
+  #pp .dots i.f { background: var(--green); }
+  #pp .dots i.r { background: var(--mustard); }
+
+  #pp .strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1.5px solid var(--ink);
+    border-bottom: 1.5px solid var(--ink);
+  }
+  #pp .strip div { padding: 22px 8px; text-align: center; }
+  #pp .strip div + div { border-left: 1.5px solid var(--ink); }
+  #pp .strip strong { display: block; font-family: Literata, Georgia, serif; font-size: 22px; letter-spacing: -0.03em; }
+  #pp .strip span { color: var(--muted); font-size: 14px; }
+
+  #pp section.block { padding: 88px 0; }
+  #pp .section-title { font-size: clamp(32px, 4vw, 48px); line-height: 1.05; font-weight: 680; max-width: 16ch; }
+  #pp .section-lead { margin-top: 14px; max-width: 46ch; color: var(--muted); }
+
+  #pp .cards {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  #pp .card {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 20px;
+    padding: 22px;
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  #pp .swatch {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1.5px solid var(--ink);
+  }
+  #pp .card h3 { margin-top: 28px; font-size: 20px; font-weight: 800; letter-spacing: -0.03em; }
+  #pp .card p { margin-top: 8px; color: var(--muted); font-size: 15px; }
+
+  #pp .split {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 28px;
+    align-items: stretch;
+  }
+  #pp .panel {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 28px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  #pp .panel .orb {
+    position: absolute; border-radius: 50%;
+    width: 180px; height: 180px; right: -40px; bottom: -50px;
+    background: rgba(69, 138, 106, 0.85);
+  }
+  #pp .panel .orb.b {
+    width: 90px; height: 90px; left: 30px; bottom: 24px; right: auto;
+    background: rgba(224, 174, 51, 0.9);
+  }
+  #pp .panel h2, #pp .panel p { position: relative; }
+  #pp .panel p { margin-top: 12px; color: rgba(251, 247, 234, 0.78); max-width: 28ch; }
+  #pp .formula {
+    display: grid;
+    gap: 12px;
+  }
+  #pp .formula article {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 18px;
+    padding: 18px 18px 16px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+  }
+  #pp .num {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--mustard);
+    border: 1.5px solid var(--ink);
+    font-weight: 800;
+  }
+  #pp .formula h3 { font-size: 16px; font-weight: 800; }
+  #pp .formula p { color: var(--muted); font-size: 14px; margin-top: 2px; }
+
+  #pp .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 36px; }
+  #pp .step {
+    padding: 22px;
+    border-radius: 20px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+  }
+  #pp .step:nth-child(2) { background: #E7F0E2; }
+  #pp .step:nth-child(3) { background: #F8E3C8; }
+  #pp .step em {
+    font-style: normal;
+    font-family: Literata, Georgia, serif;
+    font-size: 40px;
+    letter-spacing: -0.04em;
+  }
+  #pp .step h3 { margin: 18px 0 8px; font-size: 20px; font-weight: 800; }
+  #pp .step p { color: var(--muted); font-size: 15px; }
+
+  #pp .download {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 32px;
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  #pp #care, #pp #download { scroll-margin-top: 96px; }
+  #pp .download h2, #pp .download p, #pp .download .actions { position: relative; }
+  #pp .download p { margin-top: 12px; color: var(--muted); max-width: 42ch; }
+
+  #pp .foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 28px 0 40px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  @media (max-width: 860px) {
+    #pp .hero-grid, #pp .split, #pp .cards, #pp .steps, #pp .strip {
+      grid-template-columns: 1fr;
+    }
+    #pp .strip div + div { border-left: 0; border-top: 1.5px solid var(--ink); }
+    #pp .phone { justify-self: start; }
+    #pp .hero { padding-bottom: 48px; }
+    #pp section.block { padding: 64px 0; }
+    #pp .download { padding: 28px 22px; }
+    #pp .shape.wedge, #pp .shape.arc { display: none; }
+  }
+</style>
+
+<div id="pp">
+  <header class="head">
+    <a class="logo" href="#top">
+      <img class="mark" src="data:image/png;base64,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" alt="" width="36" height="36">
+      Комнатные растения
+    </a>
+    <a class="btn small js-download" href="#download">Скачать</a>
+  </header>
+
+  <div class="hero" id="top">
+    <div class="shape circle-a"></div>
+    <div class="shape circle-b"></div>
+    <div class="shape dot"></div>
+    <div class="shape wedge"></div>
+    <div class="shape arc"></div>
+    <div class="wrap hero-grid">
+      <div>
+        <div class="kicker"><i></i> Уход за растениями для Android</div>
+        <h1 class="serif">Сегодняшний уход уже посчитан</h1>
+        <p class="lead">На главном экране видно, кого полить, удобрить и пересадить. Срок полива зависит от объёма горшка и температуры комнаты, где растение стоит.</p>
+        <div class="actions">
+          <a class="btn js-download" href="#download">Скачать приложение</a>
+          <a class="btn light" href="#care">Как устроен уход</a>
+        </div>
+        <p class="fine">Приложение для Android. После загрузки разрешите установку из этого источника.</p>
+      </div>
+
+      <div class="phone" aria-hidden="true">
+        <div class="status"><span>9:41</span><span>22°</span></div>
+        <div class="search">Поиск растений...</div>
+        <div class="chips">
+          <span class="on">Все</span>
+          <span>Лиственные</span>
+          <span>Цветущие</span>
+          <span>Папоротники</span>
+        </div>
+        <div class="modes"><span class="on">Список</span><span>Карточки</span></div>
+        <div class="plant">
+          <div class="avatar" style="background:#458A6A"></div>
+          <div><b>Монстера</b><small>Монстера деликатесная</small></div>
+          <em>4 фото</em>
+        </div>
+        <div class="plant">
+          <div class="avatar" style="background:#2A5F80"></div>
+          <div><b>Фаленопсис</b><small>Фаленопсис</small></div>
+          <em>2 фото</em>
+        </div>
+        <div class="plant">
+          <div class="avatar" style="background:#E0AE33"></div>
+          <div><b>Алоэ вера</b><small>Алоэ вера</small></div>
+          <em>нет фото</em>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div class="wrap" style="display:contents">
+      <div><strong class="serif">Полив</strong><span>синий день в календаре</span></div>
+      <div><strong class="serif">Удобрение</strong><span>зелёный день, свой состав</span></div>
+      <div><strong class="serif">Пересадка</strong><span>жёлтый день, обычно к марту</span></div>
+    </div>
+  </div>
+
+  <section class="block" id="care">
+    <div class="wrap">
+      <h2 class="serif section-title">Главный экран собирает день ухода</h2>
+      <p class="section-lead">Сверху сводка на сегодня, ниже коллекция и комнаты, под ними календарь месяца. День открывается списком: отметили растения и нажали «Полил».</p>
+      <div class="cards">
+        <article class="card">
+          <div class="swatch" style="background:#2A5F80"></div>
+          <div>
+            <h3>Полив</h3>
+            <p>Базовый интервал задан для горшка 1 л при 22°. Объём и температура комнаты пересчитывают срок. Горшок 0,5 л просыхает примерно вдвое быстрее.</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="swatch" style="background:#458A6A"></div>
+          <div>
+            <h3>Удобрение</h3>
+            <p>Состав и пауза зависят от группы и сезона: орхидеи, папоротники, цветущие, лиственные, суккуленты и неприхотливые. Свою дозу можно записать.</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="swatch" style="background:#E0AE33"></div>
+          <div>
+            <h3>Пересадка</h3>
+            <p>Срок ставится по группе растения или по вашему интервалу. Сезонная пересадка сдвигается к марту и совпадает с днём полива.</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="swatch" style="background:#E59670"></div>
+          <div>
+            <h3>Комнаты</h3>
+            <p>У гостиной, кухни и подоконника своя температура. Растение без комнаты берёт температуру дома из настроек.</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="swatch" style="background:#94BA88"></div>
+          <div>
+            <h3>Карточка</h3>
+            <p>Вид из каталога, фото, высота и число листьев, горшок, грунт и обрезка. Коллекция фильтруется: лиственные, цветущие, папоротники, орхидеи, суккуленты, неприхотливые.</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="swatch" style="background:#D0504B"></div>
+          <div>
+            <h3>Напоминание</h3>
+            <p>В выбранное время телефон пишет, если в этот день есть полив, удобрение или пересадка. Пустой день проходит без уведомления.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap split">
+      <div class="panel">
+        <div class="orb"></div>
+        <div class="orb b"></div>
+        <h2 class="serif section-title" style="color:#FBF7EA">Один литр и двадцать два градуса</h2>
+        <p>Это точка отсчёта. Горшок 0,5 л просыхает примерно вдвое быстрее. Каждые десять градусов выше 22° сокращают паузу между поливами примерно в 1,7 раза.</p>
+      </div>
+      <div class="formula">
+        <article>
+          <div class="num">1</div>
+          <div>
+            <h3>Добавьте растение</h3>
+            <p>Вид из каталога или свой текст, имя и характер: от суккулента до влаголюбивого папоротника.</p>
+          </div>
+        </article>
+        <article>
+          <div class="num">2</div>
+          <div>
+            <h3>Поставьте его в комнату</h3>
+            <p>Комната хранит свою температуру. Горшок, литры и дата последнего полива задают, когда вода понадобится снова.</p>
+          </div>
+        </article>
+        <article>
+          <div class="num">3</div>
+          <div>
+            <h3>Откройте сегодняшний день</h3>
+            <p>В календаре синий день — полив, зелёный — удобрение, жёлтый — пересадка. Отметили растения и нажали «Полил».</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <h2 class="serif section-title">Три шага до первого полива</h2>
+      <div class="steps">
+        <article class="step">
+          <em>01</em>
+          <h3>Скачайте</h3>
+          <p>Файл приложения для Android. После загрузки разрешите установку из этого источника.</p>
+        </article>
+        <article class="step">
+          <em>02</em>
+          <h3>Заведите комнату и растение</h3>
+          <p>Место со своей температурой и карточка: вид, горшок, грунт и когда поливали в последний раз.</p>
+        </article>
+        <article class="step">
+          <em>03</em>
+          <h3>Отметьте день</h3>
+          <p>Нажали «Полил» — следующий полив пересчитается. Если в этот день было удобрение, оно запишется вместе с поливом.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="download" style="padding-top:0">
+    <div class="wrap">
+      <div class="download">
+        <div>
+          <h2 class="serif section-title">Заберите «Комнатные растения» на телефон</h2>
+          <p>Коллекция остаётся на телефоне. Вход через Яндекс кладёт копию на Диск: со второго телефона подтянется более поздняя правка каждого растения.</p>
+          <div class="actions">
+            <a class="btn js-download" href="#download">Скачать для Android</a>
+          </div>
+          <p class="fine">Файл приложения для Android.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wrap foot">
+    <span>Комнатные растения</span>
+    <span>Дневник комнатных растений</span>
+  </footer>
+</div>
+
+<script>
+  /* Перед публикацией вставьте прямую ссылку на APK или страницу Google Play. */
+  var PLANT_PEOPLE_APK = "/komnatnye.apk";
+
+  (function () {
+    var links = document.querySelectorAll("#pp .js-download");
+    var url = (PLANT_PEOPLE_APK || "").trim();
+    for (var i = 0; i < links.length; i++) {
+      if (url) links[i].setAttribute("href", url);
+    }
+    var root = document.getElementById("pp");
+    if (!root || !root.closest) return;
+    var col = root.closest(".t-col");
+    var container = root.closest(".t-container");
+    var rec = root.closest(".t-rec");
+    if (col) {
+      col.style.maxWidth = "none";
+      col.style.width = "100%";
+      col.style.padding = "0";
+    }
+    if (container) {
+      container.style.maxWidth = "none";
+      container.style.width = "100%";
+      container.style.padding = "0";
+    }
+    if (rec) rec.style.padding = "0";
+  })();
+</script>
+</body>
+</html>
